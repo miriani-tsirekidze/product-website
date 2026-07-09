@@ -1320,6 +1320,16 @@ body {
   background: inherit;
   box-shadow: -1px -1px 0 rgba(20,20,20,0.05);
   border-radius: 2px 0 0 0;
+  pointer-events: none;
+}
+/* invisible hover-bridge covering the 12px gap between trigger and menu,
+   so a slow diagonal pointer path doesn't fall into dead space */
+.dropdown-menu::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: -14px;
+  height: 14px;
 }
 @keyframes dropdownIn {
   from { opacity: 0; transform: translate(-50%, -6px); }
@@ -3554,3 +3564,290 @@ body {
 
 /* Single product in chat */
 .chat-panel .product-single { max-width: 180px; margin: 8px 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHAT UI POLISH — refresh only, no structural changes.
+   All rules scoped under .chat-panel / .chat-fab / .lightbox-* / .crop-*.
+   Written after the existing chat block so the cascade wins.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* — FAB — richer, animated halo, hover-reveal label — */
+.chat-fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    width 380ms var(--ease-out),
+    transform 320ms var(--ease-out);
+  isolation: isolate;
+  overflow: visible;
+}
+
+/* Halo rings — soft pulsing accent glow behind the core */
+.chat-fab-halo {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(181,201,154,0.55), rgba(181,201,154,0) 60%);
+  filter: blur(6px);
+  opacity: 0.85;
+  z-index: -1;
+  animation: fabHalo 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.chat-fab-halo--2 {
+  inset: -14px;
+  filter: blur(14px);
+  opacity: 0.5;
+  animation-delay: 1.7s;
+  animation-duration: 4.2s;
+}
+@keyframes fabHalo {
+  0%, 100% { transform: scale(0.92); opacity: 0.55; }
+  50%      { transform: scale(1.08); opacity: 0.9; }
+}
+
+/* Core disc — conic gradient rim + dark inner face */
+.chat-fab-core {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255,255,255,0.22), transparent 55%),
+    linear-gradient(135deg, #0f0f10 0%, #1c1c1e 60%, #2b2b2e 100%);
+  box-shadow:
+    0 18px 40px -12px rgba(20,20,20,0.6),
+    0 0 0 1px rgba(255,255,255,0.05) inset,
+    0 -12px 24px -12px rgba(255,255,255,0.08) inset;
+  overflow: hidden;
+  transition: transform 320ms var(--ease-out), box-shadow 320ms var(--ease-out);
+}
+/* Rotating conic accent ring — subtle animated edge shimmer */
+.chat-fab-core::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  padding: 1.5px;
+  background: conic-gradient(from 0deg,
+    var(--accent) 0deg,
+    transparent 60deg,
+    transparent 180deg,
+    var(--accent-dark) 240deg,
+    transparent 300deg,
+    var(--accent) 360deg);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: fabRing 6s linear infinite;
+  pointer-events: none;
+  opacity: 0.9;
+}
+@keyframes fabRing {
+  to { transform: rotate(360deg); }
+}
+/* Diagonal shine sweep — plays on hover */
+.chat-fab-core::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -60%;
+  width: 60%; height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-18deg);
+  opacity: 0;
+  transition: opacity 260ms var(--ease-out);
+}
+.chat-fab:hover .chat-fab-core::after {
+  opacity: 1;
+  animation: fabShine 900ms var(--ease-out);
+}
+@keyframes fabShine {
+  0%   { left: -60%; }
+  100% { left: 140%; }
+}
+
+/* Icon — chat bubble w/ checkmark, tilts on hover */
+.chat-fab-icon {
+  color: #fff;
+  transition: transform 320ms var(--ease-out);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  position: relative;
+  z-index: 1;
+}
+.chat-fab:hover .chat-fab-icon {
+  transform: rotate(-6deg) scale(1.08);
+}
+
+/* Sparkles — tiny stars that twinkle around the icon */
+.chat-fab-sparkle {
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255,255,255,0.9);
+  opacity: 0;
+  pointer-events: none;
+  animation: fabSparkle 3.6s ease-in-out infinite;
+}
+.chat-fab-sparkle--1 { top: 18px; right: 16px; animation-delay: 0s; width: 5px; height: 5px; }
+.chat-fab-sparkle--2 { bottom: 20px; left: 16px; animation-delay: 1.2s; width: 4px; height: 4px; }
+.chat-fab-sparkle--3 { top: 26px; left: 18px; animation-delay: 2.4s; width: 3px; height: 3px; }
+@keyframes fabSparkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  20%      { opacity: 1; transform: scale(1.2); }
+  40%      { opacity: 0; transform: scale(0.4); }
+}
+
+/* Hover-reveal label — slides out to the left */
+.chat-fab-label {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translate(6px, -50%);
+  margin-right: 12px;
+  padding: 10px 16px 10px 18px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,249,246,0.98));
+  color: var(--text);
+  white-space: nowrap;
+  text-align: right;
+  box-shadow:
+    0 14px 30px -14px rgba(20,20,20,0.28),
+    0 0 0 1px rgba(20,20,20,0.05);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 320ms var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.chat-fab-label::after {
+  content: '';
+  position: absolute;
+  right: -5px; top: 50%;
+  width: 10px; height: 10px;
+  transform: translateY(-50%) rotate(45deg);
+  background: inherit;
+  box-shadow: 1px -1px 0 rgba(20,20,20,0.05);
+  border-radius: 2px;
+}
+.chat-fab-label-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  font-weight: 700;
+}
+.chat-fab-label-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.chat-fab:hover .chat-fab-label,
+.chat-fab:focus-visible .chat-fab-label {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* Hover / active on the whole FAB */
+.chat-fab:hover .chat-fab-core {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow:
+    0 26px 54px -14px rgba(20,20,20,0.65),
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 -12px 24px -12px rgba(255,255,255,0.1) inset;
+}
+.chat-fab:active .chat-fab-core { transform: translateY(-1px) scale(1.01); }
+
+/* Hidden state — collapses when panel is open */
+.chat-fab--open {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.6) translateY(20px);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 260ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-fab-halo,
+  .chat-fab-core::before,
+  .chat-fab-sparkle { animation: none; }
+  .chat-fab-halo { opacity: 0.5; }
+  .chat-fab-sparkle { opacity: 0; }
+}
+
+@media (max-width: 780px) {
+  .chat-fab { width: 68px; height: 68px; bottom: 20px; right: 20px; }
+  .chat-fab-label { display: none; }
+}
+
+/* — Welcome / empty — */
+.chat-panel .welcome-message {
+  padding: 48px 24px;
+  text-align: center;
+}
+.chat-panel .welcome-message::before {
+  content: 'AI · STYLIST';
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  color: var(--text-light);
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.chat-panel .welcome-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, rgba(181,201,154,0.22), rgba(143,170,110,0.10));
+  box-shadow: inset 0 0 0 1px rgba(20,20,20,0.04);
+}
+.chat-panel .welcome-icon svg { stroke: var(--accent-dark); width: 32px; height: 32px; }
+.chat-panel .welcome-message h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.chat-panel .welcome-message p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* — Focus ring for FAB — */
+.chat-fab:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+}

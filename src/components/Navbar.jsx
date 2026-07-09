@@ -1,13 +1,37 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { BRANDS, CATEGORIES } from '../data/mockProducts';
 import BrandLogo from './BrandLogo';
 
+function useHoverIntent(closeDelay = 120) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef(null);
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  const onMouseEnter = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setOpen(true);
+  };
+  const onMouseLeave = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setOpen(false), closeDelay);
+  };
+  const close = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setOpen(false);
+  };
+
+  return { open, handlers: { onMouseEnter, onMouseLeave }, close };
+}
+
 export default function Navbar() {
   const { itemCount } = useCart();
-  const [brandsOpen, setBrandsOpen] = useState(false);
-  const [catsOpen, setCatsOpen] = useState(false);
+  const brands = useHoverIntent();
+  const cats = useHoverIntent();
   const navigate = useNavigate();
 
   return (
@@ -25,16 +49,16 @@ export default function Navbar() {
       </Link>
       <div className="navbar-links">
         <Link to="/">Home</Link>
-        <div className="dropdown" onMouseEnter={() => setBrandsOpen(true)} onMouseLeave={() => setBrandsOpen(false)}>
+        <div className="dropdown" {...brands.handlers}>
           <button className="dropdown-trigger">Brands</button>
-          {brandsOpen && (
+          {brands.open && (
             <div className="dropdown-menu">
               {BRANDS.map((b, i) => (
                 <button
                   key={b}
                   className="dropdown-item"
                   style={{ '--i': i }}
-                  onClick={() => { navigate(`/brand/${encodeURIComponent(b)}`); setBrandsOpen(false); }}
+                  onClick={() => { navigate(`/brand/${encodeURIComponent(b)}`); brands.close(); }}
                 >
                   <BrandLogo brand={b} size="sm" variant="on-light" />
                   <span className="visually-hidden">{b}</span>
@@ -44,16 +68,16 @@ export default function Navbar() {
             </div>
           )}
         </div>
-        <div className="dropdown" onMouseEnter={() => setCatsOpen(true)} onMouseLeave={() => setCatsOpen(false)}>
+        <div className="dropdown" {...cats.handlers}>
           <button className="dropdown-trigger">Categories</button>
-          {catsOpen && (
+          {cats.open && (
             <div className="dropdown-menu dropdown-menu--text">
               {CATEGORIES.map((c, i) => (
                 <button
                   key={c}
                   className="dropdown-item dropdown-item--text"
                   style={{ '--i': i }}
-                  onClick={() => { navigate(`/category/${encodeURIComponent(c)}`); setCatsOpen(false); }}
+                  onClick={() => { navigate(`/category/${encodeURIComponent(c)}`); cats.close(); }}
                 >
                   <span>{c}</span>
                   <span className="dropdown-item-arrow" aria-hidden="true">→</span>
