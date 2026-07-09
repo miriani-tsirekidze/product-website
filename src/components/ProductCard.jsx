@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import BrandLogo from './BrandLogo';
 
 export default function ProductCard({ product }) {
   const [imgError, setImgError] = useState(false);
@@ -19,7 +20,7 @@ export default function ProductCard({ product }) {
         )}
       </div>
       <div className="product-card-info">
-        <span className="product-card-brand">{product.brand}</span>
+        <span className="product-card-brand"><BrandLogo brand={product.brand} size="sm" variant="on-light" /></span>
         <h3 className="product-card-title">{product.title}</h3>
         <span className="product-card-price">${product.price.toFixed(2)}</span>
       </div>

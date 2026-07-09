@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import BrandLogo from '../components/BrandLogo';
 
 export default function Checkout() {
   const { items, subtotal, tax, total, clearCart } = useCart();
@@ -11,11 +12,19 @@ export default function Checkout() {
     return (
       <div className="page">
         <div className="confirmation">
-          <div className="confirmation-icon">✓</div>
-          <h1>Order Confirmed!</h1>
-          <p className="order-number">Order #{orderNumber}</p>
-          <p>Your items will ship within 3-5 business days.</p>
-          <Link to="/" className="btn-primary">Continue Shopping</Link>
+          <div className="confirmation-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="72" height="72">
+              <circle className="confirm-ring" cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="2.5" />
+              <path className="confirm-check" d="M20 33l9 9 16-18" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h1>Order confirmed</h1>
+          <p className="confirm-sub">Thanks — we've received your order.</p>
+          <div className="order-number-chip">Order <strong>#{orderNumber}</strong></div>
+          <p className="confirm-note">Your pieces will ship within 3–5 business days. A receipt is on the way to your inbox.</p>
+          <div className="confirm-actions">
+            <Link to="/" className="btn-primary">Continue Shopping</Link>
+          </div>
         </div>
       </div>
     );
@@ -25,7 +34,12 @@ export default function Checkout() {
     return (
       <div className="page">
         <div className="empty-state">
+          <svg className="empty-illo" viewBox="0 0 120 120" aria-hidden="true">
+            <rect x="24" y="30" width="72" height="60" rx="4" fill="none" stroke="currentColor" strokeWidth="2.5" />
+            <line x1="24" y1="46" x2="96" y2="46" stroke="currentColor" strokeWidth="2.5" />
+          </svg>
           <h2>Nothing to checkout</h2>
+          <p>Your bag is empty — grab a piece you love first.</p>
           <Link to="/" className="btn-primary">Start Shopping</Link>
         </div>
       </div>
@@ -39,44 +53,82 @@ export default function Checkout() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Checkout</h1>
+      <header className="page-hero reveal">
+        <span className="page-hero-eyebrow">Almost there</span>
+        <h1 className="page-hero-title">Checkout</h1>
+      </header>
       <div className="checkout-layout">
         <div className="checkout-form">
-          <h3>Shipping Information</h3>
-          <div className="form-group">
-            <label>Full Name</label>
-            <input type="text" defaultValue="John Doe" />
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" defaultValue="john@example.com" />
-          </div>
-          <div className="form-group">
-            <label>Address</label>
-            <input type="text" defaultValue="123 Fashion Street, New York, NY 10001" />
-          </div>
+          <fieldset className="checkout-fieldset">
+            <legend>Shipping Information</legend>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Full Name</label>
+                <input type="text" defaultValue="John Doe" />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" defaultValue="john@example.com" />
+              </div>
+              <div className="form-group form-group--full">
+                <label>Address</label>
+                <input type="text" defaultValue="123 Fashion Street, New York, NY 10001" />
+              </div>
+              <div className="form-group">
+                <label>City</label>
+                <input type="text" defaultValue="New York" />
+              </div>
+              <div className="form-group">
+                <label>Zip Code</label>
+                <input type="text" defaultValue="10001" />
+              </div>
+            </div>
+          </fieldset>
 
-          <h3>Payment</h3>
-          <div className="payment-card">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            <span>Visa ending in 4242</span>
-          </div>
+          <fieldset className="checkout-fieldset">
+            <legend>Payment</legend>
+            <div className="payment-card">
+              <div className="payment-card-face">
+                <div className="payment-card-chip" aria-hidden="true" />
+                <div className="payment-card-number">•••• •••• •••• 4242</div>
+                <div className="payment-card-meta">
+                  <span>John Doe</span>
+                  <span>12/29</span>
+                </div>
+              </div>
+              <div className="payment-card-brand" aria-hidden="true">VISA</div>
+            </div>
+          </fieldset>
         </div>
 
-        <div className="cart-summary">
+        <aside className="cart-summary">
           <h3>Order Summary</h3>
-          {items.map((item) => (
-            <div key={`${item.id}-${item.size}`} className="checkout-item">
-              <span>{item.title} × {item.quantity}</span>
-              <span>${(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-          ))}
+          <div className="checkout-items">
+            {items.map((item) => (
+              <div key={`${item.id}-${item.size}`} className="checkout-item">
+                <div className="checkout-item-img" aria-hidden="true">
+                  {item.image_url ? <img src={item.image_url} alt="" /> : <span>{item.title[0]}</span>}
+                </div>
+                <div className="checkout-item-info">
+                  <div className="checkout-item-brand"><BrandLogo brand={item.brand} size="sm" variant="on-light" /></div>
+                  <div className="checkout-item-title">{item.title}</div>
+                  <div className="checkout-item-meta">Size {item.size} · Qty {item.quantity}</div>
+                </div>
+                <div className="checkout-item-price">${(item.price * item.quantity).toFixed(2)}</div>
+              </div>
+            ))}
+          </div>
+          <div className="summary-divider" />
           <div className="summary-row"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
           <div className="summary-row"><span>Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
-          <div className="summary-row"><span>Shipping</span><span>Free</span></div>
+          <div className="summary-row"><span>Shipping</span><span className="pill-free">Free</span></div>
+          <div className="summary-divider" />
           <div className="summary-row total"><span>Total</span><span>${total.toFixed(2)}</span></div>
-          <button className="btn-primary full-width" onClick={handlePlaceOrder}>Place Order</button>
-        </div>
+          <button className="btn-primary full-width" onClick={handlePlaceOrder}>
+            Place Order
+            <span className="btn-arrow-icon" aria-hidden="true">→</span>
+          </button>
+        </aside>
       </div>
     </div>
   );
